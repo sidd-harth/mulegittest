@@ -10,7 +10,7 @@ http://www.mulesoft.org/schema/mule/custom-metrics http://www.mulesoft.org/schem
 	<flow name="sync-simulatorFlow" doc:id="5f9d2415-cec4-45af-ad01-cccb440c1f5d" >
 		<scheduler doc:name="Scheduler" doc:id="6877d094-8603-4bdc-aeba-8244e0b3b460" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="10000"/>
+				<fixed-frequency frequency="100000"/>
 			</scheduling-strategy>
 		</scheduler>
 		<logger level="INFO" doc:name="Logger" doc:id="ea762e26-b9a3-4e94-a31c-c57250b14e04" message='#["Start Sync"]'/>
