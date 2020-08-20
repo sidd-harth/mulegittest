@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:custom-metrics="http://www.mulesoft.org/schema/mule/custom-metrics" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/custom-metrics http://www.mulesoft.org/schema/mule/custom-metrics/current/mule-custom-metrics.xsd">
+	<flow name="sync-simulatorFlow" doc:id="5f9d2415-cec4-45af-ad01-cccb440c1f5d" >
+		<scheduler doc:name="Scheduler" doc:id="6877d094-8603-4bdc-aeba-8244e0b3b460" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10000"/>
+			</scheduling-strategy>
+		</scheduler>
+		<logger level="INFO" doc:name="Logger" doc:id="ea762e26-b9a3-4e94-a31c-c57250b14e04" message='#["Start Sync"]'/>
+		<ee:transform doc:name="Transform Message" doc:id="a589a565-6e92-415b-b32f-6407aca26b15" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+fun giveType(inputValue) = 
+	if(isEven(inputValue))
+		"Phone"
+	else
+		"Tablet"
+output application/json
+---
+{
+	orderId: uuid(),
+	amount: randomInt(2000),
+	productType: giveType(randomInt(10)),
+	timestamp: now()
+}
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<tracking:custom-event doc:name="Custom Business Event" doc:id="55041891-ab83-405b-9328-01cb3c22329b" event-name="orderProcessedEvent">
+			<tracking:meta-data key="processedTime" value="#[payload.timestamp]" />
+			<tracking:meta-data key="orderId" value="#[payload.orderId]" />
+			<tracking:meta-data key="totalAmount" value="#[payload.amount]" />
+		</tracking:custom-event>
+		<custom-metrics:send doc:name="Send Custom Metric" doc:id="67db217b-a8a4-4b14-8f8f-d70541b741c8" metricName="orderAmountProcessed">
+			<custom-metrics:dimensions >
+				<custom-metrics:dimension dimensionName="Product_Type" value="#[payload.productType]" />
+			</custom-metrics:dimensions>
+			<custom-metrics:facts >
+				<custom-metrics:fact factName="Order_Amount" value="#[payload.amount]" />
+			</custom-metrics:facts>
+		</custom-metrics:send>
+		<logger level="INFO" doc:name="Logger" doc:id="31e51041-1ea8-4c5c-8017-5658acfa05a9" message='#["Finished Sync"]' />
+	</flow>
+</mule>
